@@ -1,14 +1,6 @@
 version: "3.9"
 
 services:
-  # go-app:
-  #   container_name: go-app
-  #   image: go-api-tutorial
-  #   build: .
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - go_db
   go_db:
     container_name: go_db
     image: postgres:12
@@ -20,6 +12,28 @@ services:
       - "$DB_PORT:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  go-app:
+    container_name: go-app
+    image: go-api
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      go_db:
+        condition: service_healthy
+
 
 volumes:
   pgdata: {}

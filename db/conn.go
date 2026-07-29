@@ -43,14 +43,21 @@ func ConnectDB() (*sql.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		panic(err)
+	for i := 1; i <= 10; i++ {
+		err = db.Ping()
+		if err == nil {
+			fmt.Println("Connected to", conn.DBName)
+			return db, nil
+		}
+
+		fmt.Printf("Tentativa %d/10: aguardando banco...\n", i)
+		time.Sleep(2 * time.Second)
 	}
 
 	fmt.Println("Connected to " + dbname)
